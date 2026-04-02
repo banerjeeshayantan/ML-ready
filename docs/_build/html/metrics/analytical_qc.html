@@ -1,0 +1,374 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Analytical QC Metrics &#8212; MERIT Metrics Documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Annotation / Interoperability Metrics" href="annotation_interoperability.html" />
+    <link rel="prev" title="Metadata / FAIR Metrics" href="metadata_fair.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="analytical-qc-metrics">
+<h1>Analytical QC Metrics<a class="headerlink" href="#analytical-qc-metrics" title="Permalink to this heading">¶</a></h1>
+<section id="section-membership">
+<h2>Section membership<a class="headerlink" href="#section-membership" title="Permalink to this heading">¶</a></h2>
+<p>Analytical section has 8 metrics in UI, with 5 scored and 3 informational.</p>
+</section>
+<section id="scored-metrics-counted-in-section-score">
+<h2>Scored metrics (counted in section score)<a class="headerlink" href="#scored-metrics-counted-in-section-score" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">missingness_structure</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">assay_platform_comparability</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">feature_correlation_burden</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">outlier_burden</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">feature_level_missingness</span></code></p></li>
+</ul>
+</section>
+<section id="informational-metrics-not-counted">
+<h2>Informational metrics (not counted)<a class="headerlink" href="#informational-metrics-not-counted" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">qc_blank_presence</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">batch_info_availability</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scale_diagnostics</span></code></p></li>
+</ul>
+<p>Section score uses fixed denominator 5.</p>
+</section>
+<section id="canonical-missingness-semantics">
+<h2>Canonical missingness semantics<a class="headerlink" href="#canonical-missingness-semantics" title="Permalink to this heading">¶</a></h2>
+<p>MERIT uses a unified missing parser in <code class="docutils literal notranslate"><span class="pre">_is_missing</span></code> with source-aware zero handling.</p>
+<p>A value is missing if it is:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+<li><p>non-finite numeric (NaN/Inf)</p></li>
+<li><p>empty string</p></li>
+<li><p>known missing token (NA/N/A/null/none/nd/bdl/bql/lod/lloq/bloq/nq/loq/missing/not detected, etc.)</p></li>
+<li><p>a string starting with <code class="docutils literal notranslate"><span class="pre">&lt;</span></code></p></li>
+</ul>
+<p>Zero handling is source-aware:</p>
+<ul class="simple">
+<li><p>datatable: zero is valid</p></li>
+<li><p>mwtab/untarg/results: zero is missing</p></li>
+</ul>
+</section>
+<section id="qc-blank-presence-informational">
+<h2>1) qc_blank_presence (informational)<a class="headerlink" href="#qc-blank-presence-informational" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Detect QC/pool/reference and blank controls by keywords.</p>
+</dd>
+</dl>
+<p>Score</p>
+<div class="math notranslate nohighlight">
+\[score = 0.5\cdot I(qc\_present) + 0.5\cdot I(blank\_present)\]</div>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.5</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+<dt>Informational</dt><dd><p>Excluded from analytical section arithmetic.</p>
+</dd>
+</dl>
+</section>
+<section id="missingness-structure-scored">
+<h2>2) missingness_structure (scored)<a class="headerlink" href="#missingness-structure-scored" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Sample-level missingness over biological samples only.</p>
+</dd>
+</dl>
+<p>Per-sample rate</p>
+<div class="math notranslate nohighlight">
+\[r_s = \frac{\#\text{missing features in sample }s}{\#\text{features}}\]</div>
+<p>Per-analysis score</p>
+<div class="math notranslate nohighlight">
+\[score_a = 1 - median\left(\{r_s\}_{s \in biological}\right)\]</div>
+<p>Aggregate score</p>
+<div class="math notranslate nohighlight">
+\[score = mean\left(\{score_a\}_{analyses}\right)\]</div>
+<p>Class-dependent gap (diagnostic)</p>
+<p>Difference between max and min class-wise missingness rates. Reported and can trigger warnings,
+but is not added as a weighted arithmetic term in score.</p>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.85 and class gap &lt; 10%</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="scale-diagnostics-informational">
+<h2>3) scale_diagnostics (informational)<a class="headerlink" href="#scale-diagnostics-informational" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Distribution-shape and value-scale diagnostics for interpretation/preprocessing guidance.</p>
+</dd>
+</dl>
+<p>Classification logic (binary)</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">raw</span></code> if high-count/wide-tail signature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">likely_transformed</span></code> otherwise</p></li>
+</ul>
+<p>Per-analysis details include:</p>
+<ul>
+<li><p>min, median, p90, max</p></li>
+<li><p>log10(median)</p></li>
+<li><p>median/p90</p></li>
+<li><p>low-signal feature diagnostics (p90 bottom decile)</p></li>
+<li><p>near-zero variance diagnostics:</p>
+<div class="math notranslate nohighlight">
+\[mad\_rel = \frac{MAD(x)}{median(|x|)+10^{-8}}\]</div>
+<p>with NZV if <code class="docutils literal notranslate"><span class="pre">mad_rel</span> <span class="pre">&lt;</span> <span class="pre">1e-3</span></code> or <code class="docutils literal notranslate"><span class="pre">IQR</span> <span class="pre">==</span> <span class="pre">0</span></code>.</p>
+</li>
+</ul>
+<dl class="simple">
+<dt>Informational</dt><dd><p>Excluded from analytical section arithmetic.</p>
+</dd>
+</dl>
+</section>
+<section id="batch-info-availability-informational">
+<h2>4) batch_info_availability (informational)<a class="headerlink" href="#batch-info-availability-informational" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Detect run/batch/order metadata keys in sample attributes.</p>
+</dd>
+</dl>
+<p>Score</p>
+<ul class="simple">
+<li><p>0.5 baseline when unavailable</p></li>
+<li><p>up to 1.0 as fraction of analyses with batch keys</p></li>
+</ul>
+<dl class="simple">
+<dt>Informational</dt><dd><p>Excluded from analytical section arithmetic.</p>
+</dd>
+</dl>
+</section>
+<section id="assay-platform-comparability-scored">
+<h2>5) assay_platform_comparability (scored)<a class="headerlink" href="#assay-platform-comparability-scored" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Compare central numeric scale across analyses.</p>
+</dd>
+</dl>
+<p>Per-analysis summary</p>
+<ul class="simple">
+<li><p>Keep finite, non-missing, strictly positive cells</p></li>
+<li><p>Compute <code class="docutils literal notranslate"><span class="pre">log10_median</span></code> per analysis</p></li>
+</ul>
+<p>Spread</p>
+<div class="math notranslate nohighlight">
+\[spread = \max(log10\_median_a) - \min(log10\_median_a)\]</div>
+<p>Score</p>
+<div class="math notranslate nohighlight">
+\[score = \frac{1}{1 + spread}\]</div>
+<p>Edge cases</p>
+<ul class="simple">
+<li><p>no usable analyses -&gt; score 0.0</p></li>
+<li><p>one usable analysis -&gt; score 1.0</p></li>
+</ul>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.5</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="feature-correlation-burden-scored">
+<h2>6) feature_correlation_burden (scored)<a class="headerlink" href="#feature-correlation-burden-scored" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Detect high pairwise feature redundancy.</p>
+</dd>
+</dl>
+<p>Rule</p>
+<ul class="simple">
+<li><p>Compute Pearson correlation matrix per analysis (with NaN imputation via column mean)</p></li>
+<li><p>Count pair as high-correlation if <code class="docutils literal notranslate"><span class="pre">|r|</span> <span class="pre">&gt;=</span> <span class="pre">0.95</span></code></p></li>
+</ul>
+<p>Score</p>
+<div class="math notranslate nohighlight">
+\[score = 1 - \frac{\#high\_corr\_pairs}{\#sampled\_pairs}\]</div>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.85</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="outlier-burden-scored">
+<h2>7) outlier_burden (scored)<a class="headerlink" href="#outlier-burden-scored" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Outlier burden at sample and feature levels using IQR rule.</p>
+</dd>
+</dl>
+<p>Outlier rule</p>
+<div class="math notranslate nohighlight">
+\[x &lt; Q1 - 1.5\cdot IQR \quad \text{or} \quad x &gt; Q3 + 1.5\cdot IQR\]</div>
+<p>Components</p>
+<ul class="simple">
+<li><p>sample component from per-sample medians</p></li>
+<li><p>feature component from per-feature value points</p></li>
+</ul>
+<p>Score</p>
+<div class="math notranslate nohighlight">
+\[score = \frac{sample\_component + feature\_component}{2}\]</div>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.9</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="feature-level-missingness-scored">
+<h2>8) feature_level_missingness (scored)<a class="headerlink" href="#feature-level-missingness-scored" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Feature-wise missingness burden and high-missing feature flags.</p>
+</dd>
+</dl>
+<p>Per-feature rate</p>
+<div class="math notranslate nohighlight">
+\[r_f = \frac{\#missing\_cells\_for\_feature\ f}{\#samples}\]</div>
+<p>Summary metrics</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mean_missingness_rate</span> <span class="pre">=</span> <span class="pre">mean(r_f)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">median_missingness_rate</span> <span class="pre">=</span> <span class="pre">median(r_f)</span></code></p></li>
+<li><p>high-missing feature threshold = 30%</p></li>
+</ul>
+<p>Score</p>
+<div class="math notranslate nohighlight">
+\[score = 1 - mean\_missingness\_rate\]</div>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if fraction(features &gt;30% missing) &lt; 10%</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="representative-tooltip-output-text">
+<h2>Representative tooltip/output text<a class="headerlink" href="#representative-tooltip-output-text" title="Permalink to this heading">¶</a></h2>
+<p>Examples aligned with current UI copy:</p>
+<ul class="simple">
+<li><p>“Source-aware zero handling: datatable zeros are treated as valid (curated structural fill); mwTab/untarg_data zeros are treated as missing (below detection).”</p></li>
+<li><p>“Score = 1 / (1 + spread), where spread is in log10 units.”</p></li>
+<li><p>“For each listed feature, the percentage in parentheses is outlier_rate = n_outlier_values / n_values × 100.”</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">MERIT Documentation</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Core Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline_and_data_model.html">Pipeline and Data Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scoring_and_gates.html">Scoring Framework and Gates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../output_schema.html">Output Schema and Interpretation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui_text_and_tooltips.html">UI Text and Tooltip Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Metric Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Metric Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="structural.html">Structural Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata_fair.html">Metadata / FAIR Metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Analytical QC Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotation_interoperability.html">Annotation / Interoperability Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohort_bias.html">Cohort / Bias Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_feasibility.html">ML Feasibility Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class_separability.html">Class Separability (Diagnostic)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cross_study_harmonization.html">Cross-Study Harmonization Metrics</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Metric Reference</a><ul>
+      <li>Previous: <a href="metadata_fair.html" title="previous chapter">Metadata / FAIR Metrics</a></li>
+      <li>Next: <a href="annotation_interoperability.html" title="next chapter">Annotation / Interoperability Metrics</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, MERIT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/metrics/analytical_qc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

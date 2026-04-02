@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Annotation / Interoperability Metrics &#8212; MERIT Metrics Documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Cohort / Bias Metrics" href="cohort_bias.html" />
+    <link rel="prev" title="Analytical QC Metrics" href="analytical_qc.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="annotation-interoperability-metrics">
+<h1>Annotation / Interoperability Metrics<a class="headerlink" href="#annotation-interoperability-metrics" title="Permalink to this heading">¶</a></h1>
+<section id="section-membership">
+<h2>Section membership<a class="headerlink" href="#section-membership" title="Permalink to this heading">¶</a></h2>
+<p>Annotation section includes 4 scored metrics:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">feature_annotation_type</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">annotation_ambiguity_burden</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unknown_feature_fraction</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">feature_redundancy</span></code></p></li>
+</ul>
+<p>Section score is unweighted mean with fixed denominator 4.</p>
+<p>Additional metric class in module (not in current default section score):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">identifier_coverage</span></code></p></li>
+</ul>
+</section>
+<section id="feature-annotation-type">
+<h2>1) feature_annotation_type<a class="headerlink" href="#feature-annotation-type" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Classify feature naming layer quality and annotation modality.</p>
+</dd>
+</dl>
+<p>Counts tracked</p>
+<ul class="simple">
+<li><p>named metabolites</p></li>
+<li><p>mz/RT-like tokens</p></li>
+<li><p>NMR bins</p></li>
+<li><p>unannotated placeholders</p></li>
+<li><p>non-metabolite tokens</p></li>
+</ul>
+<p>Tiering rules</p>
+<ul class="simple">
+<li><p>if NMR-bin fraction &gt;= 50% -&gt; score 0.65 (tier <code class="docutils literal notranslate"><span class="pre">nmr_binned</span></code>)</p></li>
+<li><p>else if named fraction &gt;= 70% -&gt; score 1.0 (tier <code class="docutils literal notranslate"><span class="pre">named_metabolites</span></code>)</p></li>
+<li><p>else if named &gt; 0 and (named + mz_rt)/total &gt;= 70% -&gt; score 0.5 (tier <code class="docutils literal notranslate"><span class="pre">mixed_mz_rt</span></code>)</p></li>
+<li><p>else -&gt; score 0.2 (tier <code class="docutils literal notranslate"><span class="pre">mostly_unannotated</span></code>)</p></li>
+</ul>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.65</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="annotation-ambiguity-burden">
+<h2>2) annotation_ambiguity_burden<a class="headerlink" href="#annotation-ambiguity-burden" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Penalize unresolved multi-candidate or ambiguous annotations.</p>
+</dd>
+</dl>
+<p>Formula</p>
+<div class="math notranslate nohighlight">
+\[score = 1 - \frac{ambiguous}{total}\]</div>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.7</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+<dt>NMR special case</dt><dd><p>NMR-binned studies return N/A-style pass behavior (score 1.0) for ambiguity semantics.</p>
+</dd>
+</dl>
+</section>
+<section id="unknown-feature-fraction">
+<h2>3) unknown_feature_fraction<a class="headerlink" href="#unknown-feature-fraction" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Quantify proportion of unknown/unidentified placeholders.</p>
+</dd>
+</dl>
+<p>Formula</p>
+<div class="math notranslate nohighlight">
+\[score = 1 - \frac{unknown\_features}{total\_features}\]</div>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.8</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+<dt>NMR handling</dt><dd><p>NMR bins are treated as identified spectral positions, not unknowns.</p>
+</dd>
+</dl>
+</section>
+<section id="feature-redundancy">
+<h2>4) feature_redundancy<a class="headerlink" href="#feature-redundancy" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Detect repeated raw feature names within each assay.</p>
+</dd>
+</dl>
+<p>Formula</p>
+<div class="math notranslate nohighlight">
+\[score = 1 - \frac{redundant}{total}\]</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">redundant</span></code> is sum of <code class="docutils literal notranslate"><span class="pre">count-1</span></code> for duplicate raw names within-assay.</p>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.85</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="additional-metric-class-identifier-coverage">
+<h2>Additional metric class: identifier_coverage<a class="headerlink" href="#additional-metric-class-identifier-coverage" title="Permalink to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">identifier_coverage</span></code> is implemented in <code class="docutils literal notranslate"><span class="pre">merit/metrics/annotation.py</span></code> and
+can be run in custom pipelines.</p>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Measure strict external-ID / trusted-namespace coverage.</p>
+</dd>
+<dt>Rule</dt><dd><ul class="simple">
+<li><p>count as covered if feature has external DB identifier or mapping namespace
+in trusted set (refmet, hmdb, chebi, kegg, pubchem, inchi, inchikey, metlin, lipidmaps)</p></li>
+<li><p>score = covered / total annotations</p></li>
+</ul>
+</dd>
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.7</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+<dt>NMR handling</dt><dd><p>Returns pass-style not-applicable behavior for NMR-binned studies.</p>
+</dd>
+</dl>
+</section>
+<section id="why-annotation-is-core-scored">
+<h2>Why annotation is core-scored<a class="headerlink" href="#why-annotation-is-core-scored" title="Permalink to this heading">¶</a></h2>
+<p>MERIT includes annotation in core readiness intentionally:</p>
+<ul class="simple">
+<li><p>interpretability is a primary objective for metabolomics ML,</p></li>
+<li><p>weak annotation degrades biological meaning even when predictive modeling is feasible,</p></li>
+<li><p>therefore annotation quality is treated as core readiness, not an optional appendix.</p></li>
+</ul>
+</section>
+<section id="representative-ui-text">
+<h2>Representative UI text<a class="headerlink" href="#representative-ui-text" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>“This section is included in the core ML readiness score because interpretability is a core readiness requirement for metabolomics ML.”</p></li>
+<li><p>“Named metabolites are preferred for ML interpretability and cross-study reuse.”</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">MERIT Documentation</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Core Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline_and_data_model.html">Pipeline and Data Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scoring_and_gates.html">Scoring Framework and Gates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../output_schema.html">Output Schema and Interpretation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui_text_and_tooltips.html">UI Text and Tooltip Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Metric Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Metric Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="structural.html">Structural Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata_fair.html">Metadata / FAIR Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analytical_qc.html">Analytical QC Metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Annotation / Interoperability Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohort_bias.html">Cohort / Bias Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_feasibility.html">ML Feasibility Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class_separability.html">Class Separability (Diagnostic)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cross_study_harmonization.html">Cross-Study Harmonization Metrics</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Metric Reference</a><ul>
+      <li>Previous: <a href="analytical_qc.html" title="previous chapter">Analytical QC Metrics</a></li>
+      <li>Next: <a href="cohort_bias.html" title="next chapter">Cohort / Bias Metrics</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, MERIT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/metrics/annotation_interoperability.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

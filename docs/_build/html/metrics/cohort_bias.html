@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Cohort / Bias Metrics &#8212; MERIT Metrics Documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ML Feasibility Metrics" href="ml_feasibility.html" />
+    <link rel="prev" title="Annotation / Interoperability Metrics" href="annotation_interoperability.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="cohort-bias-metrics">
+<h1>Cohort / Bias Metrics<a class="headerlink" href="#cohort-bias-metrics" title="Permalink to this heading">¶</a></h1>
+<section id="section-membership">
+<h2>Section membership<a class="headerlink" href="#section-membership" title="Permalink to this heading">¶</a></h2>
+<p>Cohort section currently scores 3 metrics:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">class_balance</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">group_size_support</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label_entropy</span></code></p></li>
+</ul>
+<p>Section score is unweighted mean with fixed denominator 3.</p>
+</section>
+<section id="class-balance">
+<h2>1) class_balance<a class="headerlink" href="#class-balance" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Quantify imbalance severity via smallest-to-largest class ratio.</p>
+</dd>
+</dl>
+<p>Formula</p>
+<div class="math notranslate nohighlight">
+\[score = \frac{\min(class\ counts)}{\max(class\ counts)}\]</div>
+<p>Special cases</p>
+<ul class="simple">
+<li><p>no valid classes -&gt; score 0.0</p></li>
+<li><p>single class only -&gt; score 0.25</p></li>
+</ul>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.4</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="group-size-support">
+<h2>2) group_size_support<a class="headerlink" href="#group-size-support" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Ensure smallest class has enough support for stable training/validation.</p>
+</dd>
+</dl>
+<p>Tiered scoring by <code class="docutils literal notranslate"><span class="pre">min_class_n</span></code>:</p>
+<ul class="simple">
+<li><p>&gt;=20 -&gt; 1.0</p></li>
+<li><p>10-19 -&gt; 0.7</p></li>
+<li><p>5-9 -&gt; 0.4</p></li>
+<li><p>&lt;5 -&gt; 0.1</p></li>
+<li><p>fewer than 2 classes -&gt; 0.0</p></li>
+</ul>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.7</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="label-entropy">
+<h2>3) label_entropy<a class="headerlink" href="#label-entropy" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Capture distribution evenness across classes using normalized entropy.</p>
+</dd>
+</dl>
+<p>Definitions</p>
+<div class="math notranslate nohighlight">
+\[H = -\sum_i p_i\ln p_i\]</div>
+<div class="math notranslate nohighlight">
+\[H_{max} = \ln(K)\]</div>
+<div class="math notranslate nohighlight">
+\[score = H/H_{max}\]</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">K</span></code> is number of classes.</p>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.7</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="section-formula">
+<h2>Section formula<a class="headerlink" href="#section-formula" title="Permalink to this heading">¶</a></h2>
+<div class="math notranslate nohighlight">
+\[cohort\_score = mean(class\_balance,\ group\_size\_support,\ label\_entropy)\]</div>
+</section>
+<section id="legacy-optional-cohort-metrics-in-codebase">
+<h2>Legacy/optional cohort metrics in codebase<a class="headerlink" href="#legacy-optional-cohort-metrics-in-codebase" title="Permalink to this heading">¶</a></h2>
+<p>Additional cohort metrics still exist in module code but are not part of current default section score path:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sample_type_confounding_risk</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">age_biological_sex_metadata</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">biological_sex_distribution</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sample_matrix_homogeneity</span></code></p></li>
+</ul>
+<p>These can be retained for exploratory diagnostics if explicitly invoked.</p>
+</section>
+<section id="representative-ui-text">
+<h2>Representative UI text<a class="headerlink" href="#representative-ui-text" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>“Cohort section score = mean(class_balance, group_size_support, label_entropy).”</p></li>
+<li><p>“Normalized class-distribution entropy (0-1), where H = -sum(p_i ln p_i) and score = H / ln(K).”</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">MERIT Documentation</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Core Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline_and_data_model.html">Pipeline and Data Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scoring_and_gates.html">Scoring Framework and Gates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../output_schema.html">Output Schema and Interpretation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui_text_and_tooltips.html">UI Text and Tooltip Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Metric Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Metric Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="structural.html">Structural Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata_fair.html">Metadata / FAIR Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analytical_qc.html">Analytical QC Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotation_interoperability.html">Annotation / Interoperability Metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Cohort / Bias Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ml_feasibility.html">ML Feasibility Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class_separability.html">Class Separability (Diagnostic)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cross_study_harmonization.html">Cross-Study Harmonization Metrics</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Metric Reference</a><ul>
+      <li>Previous: <a href="annotation_interoperability.html" title="previous chapter">Annotation / Interoperability Metrics</a></li>
+      <li>Next: <a href="ml_feasibility.html" title="next chapter">ML Feasibility Metrics</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, MERIT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/metrics/cohort_bias.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

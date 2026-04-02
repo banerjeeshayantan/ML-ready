@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>ML Feasibility Metrics &#8212; MERIT Metrics Documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Class Separability (Diagnostic)" href="class_separability.html" />
+    <link rel="prev" title="Cohort / Bias Metrics" href="cohort_bias.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="ml-feasibility-metrics">
+<h1>ML Feasibility Metrics<a class="headerlink" href="#ml-feasibility-metrics" title="Permalink to this heading">¶</a></h1>
+<section id="section-membership-scored">
+<h2>Section membership (scored)<a class="headerlink" href="#section-membership-scored" title="Permalink to this heading">¶</a></h2>
+<p>Current ML Feasibility section score includes exactly 4 metrics:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">disease_endpoint_extractability</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">factor_label_harmonizability</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label_suitability</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">feature_to_sample_ratio</span></code></p></li>
+</ol>
+<p>Section score is unweighted mean with fixed denominator 4.</p>
+<div class="math notranslate nohighlight">
+\[S_{ml\_feasibility} = mean(m_1, m_2, m_3, m_4)\]</div>
+</section>
+<section id="disease-endpoint-extractability">
+<h2>1) disease_endpoint_extractability<a class="headerlink" href="#disease-endpoint-extractability" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Checks whether sample labels define a usable supervised endpoint.</p>
+</dd>
+<dt>Inputs</dt><dd><ul class="simple">
+<li><p>Study-level disease field presence</p></li>
+<li><p>Biological-sample labels only</p></li>
+<li><p>Label coverage (valid labels / labeled biological samples)</p></li>
+<li><p>Number of distinct usable groups</p></li>
+</ul>
+</dd>
+<dt>Rule (tiered)</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">score=0.0,</span> <span class="pre">fail</span></code> if disease missing and coverage &lt; 0.5</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">score=1.0,</span> <span class="pre">pass</span></code> if groups &gt;= 2 and coverage &gt;= 0.8</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">score=0.7,</span> <span class="pre">warn</span></code> if groups &gt;= 2 and coverage &gt;= 0.5</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">score=0.3,</span> <span class="pre">warn</span></code> otherwise</p></li>
+</ul>
+</dd>
+<dt>Implementation detail</dt><dd><p>Also records non-usable label examples with sample IDs, surfaced in recommendations.</p>
+</dd>
+</dl>
+</section>
+<section id="factor-label-harmonizability">
+<h2>2) factor_label_harmonizability<a class="headerlink" href="#factor-label-harmonizability" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Measures label quality and factor-string structural complexity.</p>
+</dd>
+</dl>
+<p>Formula</p>
+<div class="math notranslate nohighlight">
+\[score = 0.5 \times label\_quality + 0.5 \times simplicity\]</div>
+<dl class="simple">
+<dt>Where:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">label_quality</span></code> = fraction of biological samples with non-unknown labels</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">simplicity</span></code> is stepwise from average number of <code class="docutils literal notranslate"><span class="pre">|</span></code> separators:</p>
+<ul>
+<li><p>&lt;1 pipe -&gt; 1.0</p></li>
+<li><p>&lt;2 pipes -&gt; 0.7</p></li>
+<li><p>&lt;3 pipes -&gt; 0.4</p></li>
+<li><p>&gt;=3 pipes -&gt; 0.1</p></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.75</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="label-suitability">
+<h2>3) label_suitability<a class="headerlink" href="#label-suitability" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Enforces minimum per-class support for supervised classification.</p>
+</dd>
+<dt>Definitions</dt><dd><ul class="simple">
+<li><p>Let <code class="docutils literal notranslate"><span class="pre">min_count</span></code> be configured minimum class count (default 5)</p></li>
+<li><p>Let <code class="docutils literal notranslate"><span class="pre">observed_min</span></code> be smallest valid class size</p></li>
+</ul>
+</dd>
+<dt>Formula</dt><dd><ul class="simple">
+<li><p>if &lt;2 classes: <code class="docutils literal notranslate"><span class="pre">score</span> <span class="pre">=</span> <span class="pre">0.0</span></code></p></li>
+<li><p>else: <code class="docutils literal notranslate"><span class="pre">score</span> <span class="pre">=</span> <span class="pre">min(1.0,</span> <span class="pre">observed_min</span> <span class="pre">/</span> <span class="pre">min_count)</span></code></p></li>
+</ul>
+</dd>
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass only when score == 1.0</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="feature-to-sample-ratio">
+<h2>4) feature_to_sample_ratio<a class="headerlink" href="#feature-to-sample-ratio" title="Permalink to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Purpose</dt><dd><p>Penalizes high dimensionality relative to available biological samples.</p>
+</dd>
+</dl>
+<p>Per-analysis ratio</p>
+<div class="math notranslate nohighlight">
+\[r_a = \frac{n\_features\_in\_matrix}{n\_samples\_in\_matrix}\]</div>
+<dl class="simple">
+<dt>Per-analysis ratio score</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">r&lt;=10</span></code> -&gt; 1.0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">10&lt;r&lt;=50</span></code> -&gt; 0.8</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">50&lt;r&lt;=200</span></code> -&gt; 0.5</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">r&gt;200</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">max(0.1,</span> <span class="pre">1</span> <span class="pre">-</span> <span class="pre">r/1000)</span></code></p></li>
+</ul>
+</dd>
+<dt>Composite</dt><dd><p>Sample-weighted mean across analyses:</p>
+</dd>
+</dl>
+<div class="math notranslate nohighlight">
+\[score = \frac{\sum_a score_a \cdot n\_samples\_in\_matrix(a)}
+              {\sum_a n\_samples\_in\_matrix(a)}\]</div>
+<dl class="simple">
+<dt>Status</dt><dd><ul class="simple">
+<li><p>pass if score &gt;= 0.8</p></li>
+<li><p>warn otherwise</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="current-ui-subsection-layout">
+<h2>Current UI subsection layout<a class="headerlink" href="#current-ui-subsection-layout" title="Permalink to this heading">¶</a></h2>
+<p>ML Feasibility tab renders:</p>
+<ul class="simple">
+<li><p><strong>Label Usability</strong>
+- disease endpoint extractability
+- factor label harmonizability</p></li>
+<li><p><strong>Core ML Readiness</strong>
+- label suitability
+- feature-to-sample ratio</p></li>
+</ul>
+</section>
+<section id="related-metric-classes-present-in-code-but-excluded-from-this-section-score">
+<h2>Related metric classes present in code but excluded from this section score<a class="headerlink" href="#related-metric-classes-present-in-code-but-excluded-from-this-section-score" title="Permalink to this heading">¶</a></h2>
+<p>Defined in <code class="docutils literal notranslate"><span class="pre">merit/metrics/ml_readiness.py</span></code> but not in current scored membership:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">recommended_ml_task</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stratified_split_feasibility</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">benchmark_split_leakage_risk</span></code></p></li>
+</ul>
+<p>These can still be used diagnostically in custom runs, but are excluded from
+the current readiness section arithmetic.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">MERIT Documentation</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Core Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline_and_data_model.html">Pipeline and Data Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scoring_and_gates.html">Scoring Framework and Gates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../output_schema.html">Output Schema and Interpretation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui_text_and_tooltips.html">UI Text and Tooltip Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Metric Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Metric Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="structural.html">Structural Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata_fair.html">Metadata / FAIR Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analytical_qc.html">Analytical QC Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotation_interoperability.html">Annotation / Interoperability Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohort_bias.html">Cohort / Bias Metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">ML Feasibility Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class_separability.html">Class Separability (Diagnostic)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cross_study_harmonization.html">Cross-Study Harmonization Metrics</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Metric Reference</a><ul>
+      <li>Previous: <a href="cohort_bias.html" title="previous chapter">Cohort / Bias Metrics</a></li>
+      <li>Next: <a href="class_separability.html" title="next chapter">Class Separability (Diagnostic)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, MERIT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/metrics/ml_feasibility.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

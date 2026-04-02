@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Scoring Framework and Gates &#8212; MERIT Metrics Documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Output Schema and Interpretation" href="output_schema.html" />
+    <link rel="prev" title="Pipeline and Data Model" href="pipeline_and_data_model.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="scoring-framework-and-gates">
+<h1>Scoring Framework and Gates<a class="headerlink" href="#scoring-framework-and-gates" title="Permalink to this heading">¶</a></h1>
+<section id="high-level-design">
+<h2>High-level design<a class="headerlink" href="#high-level-design" title="Permalink to this heading">¶</a></h2>
+<p>MERIT reports two top-level scores:</p>
+<ul class="simple">
+<li><p><strong>Core ML readiness score</strong></p></li>
+<li><p><strong>Reusability score</strong> (FAIR metadata-oriented)</p></li>
+</ul>
+<p>It also reports:</p>
+<ul class="simple">
+<li><p><strong>Provisional band</strong> (from core score)</p></li>
+<li><p><strong>Final band</strong> (after applying feasibility-gate ceilings)</p></li>
+</ul>
+</section>
+<section id="section-score-computation">
+<h2>Section score computation<a class="headerlink" href="#section-score-computation" title="Permalink to this heading">¶</a></h2>
+<p>Section scores are computed as mean of non-informational metrics within section.</p>
+<p>From <code class="docutils literal notranslate"><span class="pre">merit/readiness_score.py</span></code>:</p>
+<div class="math notranslate nohighlight">
+\[\text{section\_score} = \frac{\sum m_i}{\max(N_{\text{non-info}}, N_{\text{fixed}})}\]</div>
+<p>Where:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">m_i</span></code> are metric scores in that section with <code class="docutils literal notranslate"><span class="pre">informational=False</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">N_fixed</span></code> is the section’s fixed denominator configured in <code class="docutils literal notranslate"><span class="pre">_SECTION_METRIC_COUNTS</span></code></p></li>
+</ul>
+</section>
+<section id="current-fixed-section-counts">
+<h2>Current fixed section counts<a class="headerlink" href="#current-fixed-section-counts" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>structural: 5</p></li>
+<li><p>metadata: 2</p></li>
+<li><p>analytical: 5</p></li>
+<li><p>annotation: 4</p></li>
+<li><p>cohort: 3</p></li>
+<li><p>ml_feasibility: 4</p></li>
+</ul>
+</section>
+<section id="core-and-reusability-aggregation">
+<h2>Core and reusability aggregation<a class="headerlink" href="#core-and-reusability-aggregation" title="Permalink to this heading">¶</a></h2>
+<p>Core score uses unweighted mean of these sections:</p>
+<ul class="simple">
+<li><p>structural</p></li>
+<li><p>analytical</p></li>
+<li><p>annotation</p></li>
+<li><p>cohort</p></li>
+<li><p>ml_feasibility</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\text{core\_ml\_readiness\_score} = \frac{S_{struct}+S_{analytical}+S_{annotation}+S_{cohort}+S_{ml}}{5}\]</div>
+<p>Reusability score currently uses metadata section only:</p>
+<div class="math notranslate nohighlight">
+\[\text{reusability\_score} = S_{metadata}\]</div>
+</section>
+<section id="band-thresholds">
+<h2>Band thresholds<a class="headerlink" href="#band-thresholds" title="Permalink to this heading">¶</a></h2>
+<p>From <code class="docutils literal notranslate"><span class="pre">_band_from_score</span></code>:</p>
+<ul class="simple">
+<li><p>Ready: score &gt;= 0.85</p></li>
+<li><p>Conditional: score &gt;= 0.70</p></li>
+<li><p>Fragile: score &gt;= 0.50</p></li>
+<li><p>Not Ready: score &lt; 0.50</p></li>
+</ul>
+</section>
+<section id="feasibility-gates-g1-g5">
+<h2>Feasibility gates (G1-G5)<a class="headerlink" href="#feasibility-gates-g1-g5" title="Permalink to this heading">¶</a></h2>
+<p>Gates are computed separately and are <strong>not</strong> part of score arithmetic.</p>
+<ul class="simple">
+<li><p><strong>G1 tabular_data_availability</strong>: at least one usable matrix required</p></li>
+<li><p><strong>G2 sufficient_biological_sample_count</strong>: preferred &gt;= threshold (default 20)</p></li>
+<li><p><strong>G3 deposited_groups</strong>: &gt;=2 distinct label groups</p></li>
+<li><p><strong>G4 minimum_per_group_support</strong>: minimum class support from label suitability details</p></li>
+<li><p><strong>G5 non_catastrophic_missingness</strong>: based on median sample-level missingness</p></li>
+</ul>
+</section>
+<section id="gate-ceiling-logic">
+<h2>Gate ceiling logic<a class="headerlink" href="#gate-ceiling-logic" title="Permalink to this heading">¶</a></h2>
+<p>Final band is capped by gate statuses:</p>
+<ul class="simple">
+<li><p>If G1 fails -&gt; final band = <code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">Data</span></code></p></li>
+<li><p>Else if any gate fails -&gt; ceiling <code class="docutils literal notranslate"><span class="pre">Not</span> <span class="pre">Ready</span></code></p></li>
+<li><p>Else if any gate warns -&gt; ceiling <code class="docutils literal notranslate"><span class="pre">Conditional</span></code></p></li>
+<li><p>Else -&gt; no ceiling</p></li>
+</ul>
+<p>So:</p>
+<div class="math notranslate nohighlight">
+\[\text{final\_band} = \min(\text{provisional\_band},\ \text{gate\_ceiling})\]</div>
+<p>(with band rank ordering)</p>
+</section>
+<section id="why-annotation-is-in-core-score">
+<h2>Why annotation is in core score<a class="headerlink" href="#why-annotation-is-in-core-score" title="Permalink to this heading">¶</a></h2>
+<p>MERIT intentionally includes annotation in core score.</p>
+<p>Rationale in code comment:</p>
+<ul class="simple">
+<li><p>training can occur without strong annotation,</p></li>
+<li><p>but scientific interpretability and downstream biological utility are materially degraded,</p></li>
+<li><p>so annotation is treated as a core readiness dimension, not optional decoration.</p></li>
+</ul>
+</section>
+<section id="informational-metrics">
+<h2>Informational metrics<a class="headerlink" href="#informational-metrics" title="Permalink to this heading">¶</a></h2>
+<p>Some metrics are explicitly informational and excluded from core section arithmetic:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">qc_blank_presence</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">batch_info_availability</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scale_diagnostics</span></code></p></li>
+</ul>
+<p>These still render in UI and provide operational guidance.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">MERIT Documentation</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Core Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline_and_data_model.html">Pipeline and Data Model</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Scoring Framework and Gates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#high-level-design">High-level design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#section-score-computation">Section score computation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#current-fixed-section-counts">Current fixed section counts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#core-and-reusability-aggregation">Core and reusability aggregation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#band-thresholds">Band thresholds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feasibility-gates-g1-g5">Feasibility gates (G1-G5)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gate-ceiling-logic">Gate ceiling logic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-annotation-is-in-core-score">Why annotation is in core score</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#informational-metrics">Informational metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="output_schema.html">Output Schema and Interpretation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui_text_and_tooltips.html">UI Text and Tooltip Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Metric Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="metrics/index.html">Metric Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="pipeline_and_data_model.html" title="previous chapter">Pipeline and Data Model</a></li>
+      <li>Next: <a href="output_schema.html" title="next chapter">Output Schema and Interpretation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, MERIT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/scoring_and_gates.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
